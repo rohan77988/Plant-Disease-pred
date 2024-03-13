@@ -601,6 +601,40 @@ def predict_img(img, model, transform, classes):
 
 views = Blueprint("views", __name__)
 
+import mysql.connector
+
+# Connect to the database
+db = mysql.connector.connect(
+    host="viaduct.proxy.rlwy.net",
+    port='12233',
+    user="root",
+    password="KzzEvCYRTnURftFpaboKXVWserLYmMEi",
+    database="railway"
+)
+from flask import jsonify
+
+@views.route("/disease/<disease_name>", methods=["GET"])
+def disease_info(disease_name):
+
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM Disease WHERE name = %s", (disease_name,))
+    # rv = cursor.fetchall()
+    # Disease = []
+    # content ={}
+    # for result in rv:
+    #     content = {'symptoms' : result['symptoms'], 'causes' : result['causes'] }
+    #     Disease.append(content)
+    #     content = {}
+    # return jsonify(Disease)
+    disease = cursor.fetchone()
+    if disease:
+        cursor.execute("SELECT * FROM Effect WHERE disease_id = %s", (disease[0],))
+        effects = cursor.fetchall()
+        return jsonify({"disease": disease, "effects": effects})
+    else:
+        return jsonify({"error": "Disease not found"}), 404  # Return a 404 status code for not found errors
+
+
 
 @views.route("/predict", methods=["POST"])
 def predict():
